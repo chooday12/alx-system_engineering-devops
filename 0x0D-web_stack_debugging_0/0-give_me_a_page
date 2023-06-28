@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Fix server with servername pointing to localhost
+echo "ServerName localhost" >> /etc/apache2/apache2.conf
+service apache2 start
+
+
+#!/usr/bin/env bash
+# Set up Apache server
+# IP="$(curl ifconfig.me)"
+
+# Set ServerName to IP
+# sudo sed -i "s/#ServerName www.example.com/ServerName $IP/" /etc/apache2/sites-available/000-default.conf
+
+# Start Apache
+sudo service apache2 start
