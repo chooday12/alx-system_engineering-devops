@@ -1,33 +1,39 @@
 #!/usr/bin/python3
-"""fetches information from JSONplaceholder API and exports to JSON"""
+"""Request employee ID from API
+"""
 
 from json import dump
-from requests import get
-from sys import argv
+import requests
 
 if __name__ == "__main__":
-    users_url = "https://jsonplaceholder.typicode.com/users"
-    users_result = get(users_url).json()
 
-    big_dict = {}
-    for user in users_result:
-        todo_list = []
+    def make_request(resource, param=None):
+        """Retrieve user from API
+        """
+        url = 'https://jsonplaceholder.typicode.com/'
+        url += resource
+        if param:
+            url += ('?' + param[0] + '=' + param[1])
 
-        pep_fix = "https://jsonplaceholder.typicode.com"
-        todos_url = pep_fix + "/user/{}/todos".format(user.get("id"))
-        name_url = "https://jsonplaceholder.typicode.com/users/{}".format(
-            user.get("id"))
+        # make request
+        r = requests.get(url)
 
-        todo_result = get(todos_url).json()
-        name_result = get(name_url).json()
-        for todo in todo_result:
-            todo_dict = {}
-            todo_dict.update({"username": name_result.get("username"),
-                              "task": todo.get("title"),
-                              "completed": todo.get("completed")})
-            todo_list.append(todo_dict)
+        # extract json response
+        r = r.json()
+        return r
 
-        big_dict.update({user.get("id"): todo_list})
+    export = {}
 
-    with open("todo_all_employees.json", 'w') as f:
-        dump(big_dict, f)
+    users = make_request('users')
+    for user in users:
+        user_id = user['id']
+        export.update({user_id: []})
+        tasks_by_user = make_request('todos', ('userId', str(user_id)))
+        for task in tasks_by_user:
+            export[user_id].append({'username': user['username'],
+                                    'task': task['title'],
+                                    'completed': task['completed']})
+
+    filename = 'todo_all_employees.json'
+    with open(filename, mode='w') as f:
+        dump(export, f)

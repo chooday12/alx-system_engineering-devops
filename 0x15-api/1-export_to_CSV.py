@@ -1,26 +1,39 @@
 #!/usr/bin/python3
-"""fetches information from JSONplaceholder API and exports to CSV"""
+"""Request employee ID from API
+"""
 
-from csv import DictWriter, QUOTE_ALL
-from requests import get
+import csv
+import requests
 from sys import argv
 
-
 if __name__ == "__main__":
-    main_url = "https://jsonplaceholder.typicode.com"
-    todo_url = main_url + "/user/{}/todos".format(argv[1])
-    name_url = main_url + "/users/{}".format(argv[1])
-    todo_result = get(todo_url).json()
-    name_result = get(name_url).json()
 
-    todo_list = []
-    for todo in todo_result:
-        todo_dict = {}
-        todo_dict.update({"user_ID": argv[1], "username": name_result.get(
-            "username"), "completed": todo.get("completed"),
-                          "task": todo.get("title")})
-        todo_list.append(todo_dict)
-    with open("{}.csv".format(argv[1]), 'w', newline='') as f:
-        header = ["user_ID", "username", "completed", "task"]
-        writer = DictWriter(f, fieldnames=header, quoting=QUOTE_ALL)
-        writer.writerows(todo_list)
+    def make_request(resource, param=None):
+        """Retrieve user from API
+        """
+        url = 'https://jsonplaceholder.typicode.com/'
+        url += resource
+        if param:
+            url += ('?' + param[0] + '=' + param[1])
+
+        # make request
+        r = requests.get(url)
+
+        # extract json response
+        r = r.json()
+        return r
+
+    user = make_request('users', ('id', argv[1]))[0]
+    tasks = make_request('todos', ('userId', argv[1]))
+
+    csv_filename = argv[1] + '.csv'
+    with open(csv_filename, mode='w') as f:
+        writer = csv.writer(f,
+                            delimiter=',',
+                            quotechar='"',
+                            quoting=csv.QUOTE_ALL)
+        for task in tasks:
+            writer.writerow([user['id'],
+                            user['username'],
+                            task['completed'],
+                            task['title']])
